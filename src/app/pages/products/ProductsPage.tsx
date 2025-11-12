@@ -6,10 +6,18 @@ import { Badge } from "@/components/ui/Badge";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { formatCurrency } from "@/lib/utils/formatters";
-import { Add, Edit, Trash, SearchNormal } from "iconsax-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { Add, Edit, Trash, SearchNormal, Eye } from "iconsax-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 import { Pagination } from "@/components/ui/Pagination";
 import { ProductFormModal } from "./ProductFormModal";
+import { ProductViewModal } from "./productView";
 import { Input } from "@/components/forms/Input";
 
 export function ProductsPage() {
@@ -17,19 +25,22 @@ export function ProductsPage() {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [showProduct, setShowProduct] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(
+    null
+  );
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['products', page, search],
+    queryKey: ["products", page, search],
     queryFn: () => productsApi.getAll({ page, limit: 20, search }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productsApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       setShowDeleteModal(false);
       setDeletingProductId(null);
     },
@@ -38,6 +49,11 @@ export function ProductsPage() {
   const handleEdit = (product: any) => {
     setEditingProduct(product);
     setShowModal(true);
+  };
+
+  const handleShow = (product: any) => {
+    setEditingProduct(product);
+    setShowProduct(true);
   };
 
   const handleDelete = (id: string) => {
@@ -53,6 +69,7 @@ export function ProductsPage() {
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setShowProduct(false);
     setEditingProduct(null);
   };
 
@@ -72,9 +89,12 @@ export function ProductsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className=" w-64"
-              style={{ paddingLeft: 36}}
+              style={{ paddingLeft: 36 }}
             />
-            <SearchNormal className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <SearchNormal
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={18}
+            />
           </div>
           <Button
             onClick={() => setShowModal(true)}
@@ -110,22 +130,38 @@ export function ProductsPage() {
                   className="w-12 h-12 object-cover rounded"
                 />
               </TableCell>
-              <TableCell className="font-medium">{product.name}</TableCell>
+              <TableCell className="font-medium max-w-[360px] truncate">
+                {product.name}
+              </TableCell>
               <TableCell>{product.sku}</TableCell>
-              <TableCell>{product.categoryId?.name || '-'}</TableCell>
+              <TableCell>{product.categoryId?.name || "-"}</TableCell>
               <TableCell>{formatCurrency(product.price)}</TableCell>
               <TableCell>
-                <Badge variant={product.stock === 0 ? 'danger' : product.stock < 10 ? 'warning' : 'success'}>
+                <Badge
+                  variant={
+                    product.stock === 0
+                      ? "danger"
+                      : product.stock < 10
+                      ? "warning"
+                      : "success"
+                  }
+                >
                   {product.stock} en stock
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={product.isActive ? 'success' : 'default'}>
-                  {product.isActive ? 'Actif' : 'Inactif'}
+                <Badge variant={product.isActive ? "success" : "default"}>
+                  {product.isActive ? "Actif" : "Inactif"}
                 </Badge>
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => handleShow(product)}
+                    className="text-yellow-600 hover:text-yellow-800"
+                  >
+                    <Eye size={18} />
+                  </button>
                   <button
                     onClick={() => handleEdit(product)}
                     className="text-blue-600 hover:text-blue-800"
@@ -160,10 +196,14 @@ export function ProductsPage() {
           product={editingProduct}
           onClose={handleCloseModal}
           onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ["products"] });
             handleCloseModal();
           }}
         />
+      )}
+
+      {showProduct && (
+        <ProductViewModal product={editingProduct} onClose={handleCloseModal} />
       )}
 
       {/* Delete Confirmation Modal */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { productsApi } from "@/app/api/products";
 import { categoriesApi } from "@/app/api/categories";
@@ -14,36 +14,46 @@ interface ProductFormModalProps {
   onSuccess: () => void;
 }
 
-export function ProductFormModal({ product, onClose, onSuccess }: ProductFormModalProps) {
+export function ProductFormModal({
+  product,
+  onClose,
+  onSuccess,
+}: ProductFormModalProps) {
   const [formData, setFormData] = useState({
-    name: product?.name || '',
-    slug: product?.slug || '',
-    description: product?.description || '',
-    shortDescription: product?.shortDescription || '',
-    price: product?.price || '',
-    compareAtPrice: product?.compareAtPrice || '',
-    sku: product?.sku || '',
-    stock: product?.stock || '',
+    name: product?.name || "",
+    slug: product?.slug || "",
+    description: product?.description || "",
+    shortDescription: product?.shortDescription || "",
+    price: product?.price || "",
+    compareAtPrice: product?.compareAtPrice || "",
+    sku: product?.sku || "",
+    stock: product?.stock || "",
     lowStockThreshold: product?.lowStockThreshold || 10,
-    categoryId: product?.categoryId?._id || product?.categoryId || '',
-    subCategoryId: product?.subCategoryId?._id || product?.subCategoryId || '',
-    mainImage: product?.mainImage || '',
-    images: product?.images?.join(',') || '',
-    tags: product?.tags?.join(',') || '',
-    brand: product?.brand || '',
+    categoryId: product?.categoryId?._id || product?.categoryId || "",
+    subCategoryId: product?.subCategoryId?._id || product?.subCategoryId || "",
+    mainImage: product?.mainImage || "",
+    images: product?.images?.join(",") || "",
+    volume: product?.volume,
+    weight: product?.weight,
+    ingredients: product?.ingredients,
+    howTouse: product?.howTouse,
+    tags: product?.tags?.join(",") || "",
+    brand: product?.brand || "",
     isActive: product?.isActive ?? true,
     isFeatured: product?.isFeatured || false,
     isNew: product?.isNew || false,
   });
 
   const { data: categories } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: () => categoriesApi.getAll(),
   });
 
   const mutation = useMutation({
     mutationFn: (data: any) =>
-      product ? productsApi.update(product._id, data) : productsApi.create(data),
+      product
+        ? productsApi.update(product._id, data)
+        : productsApi.create(data),
     onSuccess,
   });
 
@@ -51,18 +61,26 @@ export function ProductFormModal({ product, onClose, onSuccess }: ProductFormMod
     e.preventDefault();
 
     if (!formData.categoryId) {
-      alert('Veuillez sélectionner une catégorie');
+      alert("Veuillez sélectionner une catégorie");
       return;
     }
 
     const payload: any = {
       ...formData,
       price: Number(formData.price),
-      compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : undefined,
+      compareAtPrice: formData.compareAtPrice
+        ? Number(formData.compareAtPrice)
+        : undefined,
       stock: Number(formData.stock),
       lowStockThreshold: Number(formData.lowStockThreshold),
-      images: formData.images.split(',').map((img: string) => img.trim()).filter(Boolean),
-      tags: formData.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean),
+      images: formData.images
+        .split(",")
+        .map((img: string) => img.trim())
+        .filter(Boolean),
+      tags: formData.tags
+        .split(",")
+        .map((tag: string) => tag.trim())
+        .filter(Boolean),
     };
 
     // Remove empty optional fields to avoid "Invalid ID format" errors
@@ -76,43 +94,71 @@ export function ProductFormModal({ product, onClose, onSuccess }: ProductFormMod
     await mutation.mutateAsync(payload);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type } = e.target;
 
     // Auto-generate slug from name if name changes and we're creating a new product
-    if (name === 'name' && !product) {
-      const slug = value.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      setFormData(prev => ({
+    if (name === "name" && !product) {
+      const slug = value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      setFormData((prev) => ({
         ...prev,
         name: value,
-        slug
+        slug,
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+        [name]:
+          type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
       }));
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/15 bg-opacity-50 flex items-center justify-center z-50" style={{ padding: '16px' }}>
+    <div
+      className="fixed inset-0 bg-black/15 bg-opacity-50 flex items-center justify-center z-50"
+      style={{ padding: "16px" }}
+    >
       <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 shadow-lg">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-100" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div
+          className="sticky top-0 bg-white border-b border-gray-100"
+          style={{
+            padding: "20px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <h2 className="text-xl font-semibold">
-            {product ? 'Modifier le produit' : 'Ajouter un produit'}
+            {product ? "Modifier le produit" : "Ajouter un produit"}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <CloseCircle size={24} />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="grid grid-cols-2" style={{ gap: '16px' }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            padding: "24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
+          <div className="grid grid-cols-2" style={{ gap: "16px" }}>
             <div className="col-span-2">
               <Input
                 label="Nom du produit"
@@ -147,10 +193,12 @@ export function ProductFormModal({ product, onClose, onSuccess }: ProductFormMod
               name="categoryId"
               value={formData.categoryId}
               onChange={handleChange}
-              options={categories?.map((cat: any) => ({
-                value: cat._id,
-                label: cat.name,
-              })) || []}
+              options={
+                categories?.map((cat: any) => ({
+                  value: cat._id,
+                  label: cat.name,
+                })) || []
+              }
               placeholder="Sélectionnez une catégorie"
               required
             />
@@ -189,6 +237,21 @@ export function ProductFormModal({ product, onClose, onSuccess }: ProductFormMod
               onChange={handleChange}
             />
 
+            <Input
+              label="Volume"
+              name="volume"
+              value={formData.volume}
+              onChange={handleChange}
+              required
+            />
+
+            <Input
+              label="Weight"
+              name="weight"
+              value={formData.weight}
+              onChange={handleChange}
+            />
+
             <div className="col-span-2">
               <Input
                 label="Marque"
@@ -214,6 +277,28 @@ export function ProductFormModal({ product, onClose, onSuccess }: ProductFormMod
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
+                required
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Textarea
+                label="Ingrédients"
+                name="ingredients"
+                value={formData.ingredients.join(",")}
+                onChange={handleChange}
+                rows={5}
+                required
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Textarea
+                label="Caractéristiques"
+                name="howTouse"
+                value={formData.howTouse}
+                onChange={handleChange}
+                rows={5}
                 required
               />
             </div>
@@ -283,12 +368,11 @@ export function ProductFormModal({ product, onClose, onSuccess }: ProductFormMod
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end border-t border-gray-100" style={{ gap: '12px', paddingTop: '16px' }}>
-            <Button
-              type="button"
-              onClick={onClose}
-              variant="outline"
-            >
+          <div
+            className="flex justify-end border-t border-gray-100"
+            style={{ gap: "12px", paddingTop: "16px" }}
+          >
+            <Button type="button" onClick={onClose} variant="outline">
               Annuler
             </Button>
             <Button
@@ -296,7 +380,7 @@ export function ProductFormModal({ product, onClose, onSuccess }: ProductFormMod
               disabled={mutation.isPending}
               variant="primary"
             >
-              {mutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
+              {mutation.isPending ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </div>
         </form>
