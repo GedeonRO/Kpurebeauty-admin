@@ -41,6 +41,8 @@ export interface Product {
   isNew: boolean;
   rating: number;
   reviewCount: number;
+  likesCount: number; // ← AJOUTER CETTE LIGNE
+  ordersCount: number; // ← AJOUTER CETTE LIGNE
   order: number;
   createdAt: string;
   updatedAt: string;

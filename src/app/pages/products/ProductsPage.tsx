@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productsApi } from "@/app/api/products";
+import { categoriesApi } from "@/app/api/categories";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -19,11 +20,16 @@ import { Pagination } from "@/components/ui/Pagination";
 import { ProductFormModal } from "./ProductFormModal";
 import { ProductViewModal } from "./productView";
 import { Input } from "@/components/forms/Input";
+import { Select } from "@/components/forms/Select";
 
 export function ProductsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // 🟢 champ brut avec debounce
+  const [categoryId, setCategoryId] = useState("");
+  const [sortBy, setSortBy] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [brand, setBrand] = useState("");
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showProduct, setShowProduct] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -32,10 +38,47 @@ export function ProductsPage() {
   );
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["products", page, search],
-    queryFn: () => productsApi.getAll({ page, limit: 20, search }),
+  // 🟢 debounce de 1000ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchTerm);
+      setPage(1); // réinitialiser à la première page quand on change la recherche
+    }, 1000);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => categoriesApi.getAll({ isActive: true }),
   });
+
+  const { data: brands } = useQuery({
+    queryKey: ["brands"],
+    queryFn: () => productsApi.getBrands(),
+  });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["products", page, search, categoryId, sortBy, brand],
+    queryFn: () =>
+      productsApi.getAll({
+        page,
+        limit: 20,
+        search,
+        categoryId: categoryId || undefined,
+        sortBy: sortBy || undefined,
+        brand: brand || undefined,
+      }),
+  });
+
+  useEffect(() => {
+    console.log("Fetching products with:", {
+      page,
+      search,
+      categoryId,
+      sortBy,
+    });
+  }, [page, search, categoryId, sortBy]);
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productsApi.delete(id),
@@ -79,23 +122,9 @@ export function ProductsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-base">Gestion des Produits</h1>
         <div className="flex gap-3">
-          <div className="relative">
-            <Input
-              placeholder="Rechercher des produits..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className=" w-64"
-              style={{ paddingLeft: 36 }}
-            />
-            <SearchNormal
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-            />
-          </div>
           <Button
             onClick={() => setShowModal(true)}
             className="bg-[#14A800] text-white px-4 py-2 flex items-center gap-2"
@@ -103,6 +132,78 @@ export function ProductsPage() {
             <Add size={20} />
             Ajouter un produit
           </Button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-3 items-end">
+        <div className="relative flex-1">
+          <Input
+            placeholder="Rechercher des produits..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full"
+            style={{ paddingLeft: 36 }}
+          />
+          <SearchNormal
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
+          />
+        </div>
+        <div className="w-56">
+          <Select
+            value={categoryId}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setPage(1);
+            }}
+            options={[
+              { value: "", label: "Toutes les catégories" },
+              ...(categories?.map((cat) => ({
+                value: cat._id,
+                label: cat.name,
+              })) || []),
+            ]}
+            placeholder="Toutes les catégories"
+          />
+        </div>
+        {/* ← AJOUTER CE DROPDOWN MARQUE */}
+        <div className="w-56">
+          <Select
+            value={brand}
+            onChange={(e) => {
+              setBrand(e.target.value);
+              setPage(1);
+            }}
+            options={[
+              { value: "", label: "Toutes les marques" },
+              ...(brands?.map((b) => ({
+                value: b,
+                label: b,
+              })) || []),
+            ]}
+            placeholder="Toutes les marques"
+          />
+        </div>
+        <div className="w-56">
+          <Select
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              setPage(1);
+            }}
+            options={[
+              { value: "", label: "Tri par défaut" },
+              { value: "most-reviewed", label: "Plus commentés" },
+              { value: "most-liked", label: "Plus likés" },
+              { value: "most-ordered", label: "Plus commandés" },
+              { value: "rating", label: "Mieux notés" },
+              { value: "newest", label: "Plus récents" },
+              { value: "price-asc", label: "Prix croissant" },
+              { value: "price-desc", label: "Prix décroissant" },
+            ]}
+            placeholder="Tri par défaut"
+          />
         </div>
       </div>
 
