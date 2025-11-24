@@ -11,6 +11,8 @@ import {
   LogoutCurve,
   CloseSquare,
   Layer,
+  Gallery,
+  Element4,
 } from "iconsax-react";
 
 interface NavItem {
@@ -25,6 +27,8 @@ const navItems: NavItem[] = [
   { name: "Catégories", path: "/categories", icon: Category },
   { name: "Produits", path: "/products", icon: Box },
   { name: "Routines", path: "/routines", icon: Layer },
+  { name: "Sections Produits", path: "/product-sections", icon: Element4 },
+  { name: "Hero Sections", path: "/hero-sections", icon: Gallery },
   { name: "Clients", path: "/customers", icon: User },
   { name: "Reviews", path: "/reviews", icon: Star },
   { name: "Promotions", path: "/promotions", icon: Gift },
