@@ -4,7 +4,7 @@ import { productSectionAPI, CreateProductSectionDTO } from "@/app/api/productSec
 import { productsApi } from "@/app/api/products";
 import { categoriesApi } from "@/app/api/categories";
 import { Button } from "@/components/ui/Button";
-import { CloseCircle } from "iconsax-react";
+import { CloseCircle, SearchNormal } from "iconsax-react";
 
 interface Props {
   section?: any;
@@ -14,6 +14,7 @@ interface Props {
 export function ProductSectionFormModal({ section, onClose }: Props) {
   const queryClient = useQueryClient();
   const isEditing = !!section;
+  const [productSearch, setProductSearch] = useState('');
 
   const [formData, setFormData] = useState<CreateProductSectionDTO>({
     title: section?.title || '',
@@ -224,21 +225,47 @@ export function ProductSectionFormModal({ section, onClose }: Props) {
             {formData.type === 'manual' && (
               <div className="col-span-2">
                 <label className="block text-sm font-medium mb-2">Sélectionner les produits</label>
+
+                {/* Search Bar */}
+                <div className="relative mb-3">
+                  <input
+                    type="text"
+                    placeholder="Rechercher un produit..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="w-full px-3 py-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <SearchNormal
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={18}
+                  />
+                </div>
+
                 <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
                   {products && products.products.length > 0 ? (
-                    products.products.map((product: any) => (
-                      <div key={product._id} className="flex items-center mb-2">
-                        <input
-                          type="checkbox"
-                          checked={formData.products?.includes(product._id)}
-                          onChange={() => handleProductToggle(product._id)}
-                          className="mr-2"
-                        />
-                        <label className="text-sm">{product.name}</label>
-                      </div>
-                    ))
+                    products.products
+                      .filter((product: any) =>
+                        product.name.toLowerCase().includes(productSearch.toLowerCase())
+                      )
+                      .map((product: any) => (
+                        <div key={product._id} className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.products?.includes(product._id)}
+                            onChange={() => handleProductToggle(product._id)}
+                            className="mr-2"
+                          />
+                          <label className="text-sm">{product.name}</label>
+                        </div>
+                      ))
                   ) : (
                     <p className="text-sm text-gray-500">Aucun produit disponible</p>
+                  )}
+                  {products && products.products.length > 0 &&
+                   products.products.filter((product: any) =>
+                     product.name.toLowerCase().includes(productSearch.toLowerCase())
+                   ).length === 0 && (
+                    <p className="text-sm text-gray-500">Aucun produit trouvé</p>
                   )}
                 </div>
               </div>
