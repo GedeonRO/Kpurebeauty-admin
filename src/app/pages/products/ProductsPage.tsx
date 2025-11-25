@@ -89,6 +89,25 @@ export function ProductsPage() {
     },
   });
 
+ 
+
+  // Vérifier les produits sans catégorie
+  useEffect(() => {
+    if (data?.products) {
+      const productsWithoutCategory = data.products.filter((p: any) => !p.categoryId);
+      if (productsWithoutCategory.length > 0) {
+        console.warn("Produits sans catégorie:", productsWithoutCategory);
+      }
+
+      // Afficher les noms de tous les produits de la page actuelle
+      console.log("=== Produits sur cette page ===");
+      data.products.forEach((p: any, index: number) => {
+        console.log(`${index + 1}. ${p.name} - Catégorie: ${p.categoryId?.name || 'N/A'} - ID: ${p._id}`);
+      });
+      console.log("================================");
+    }
+  }, [data]);
+  
   const handleEdit = (product: any) => {
     setEditingProduct(product);
     setShowModal(true);
@@ -140,8 +159,8 @@ export function ProductsPage() {
         <div className="relative flex-1">
           <Input
             placeholder="Rechercher des produits..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full"
             style={{ paddingLeft: 36 }}
           />
@@ -193,16 +212,16 @@ export function ProductsPage() {
               setPage(1);
             }}
             options={[
-              { value: "", label: "Tri par défaut" },
+              { value: "", label: "Plus récents" },
+              { value: "order", label: "Ordre d'affichage" },
               { value: "most-reviewed", label: "Plus commentés" },
               { value: "most-liked", label: "Plus likés" },
               { value: "most-ordered", label: "Plus commandés" },
               { value: "rating", label: "Mieux notés" },
-              { value: "newest", label: "Plus récents" },
               { value: "price-asc", label: "Prix croissant" },
               { value: "price-desc", label: "Prix décroissant" },
             ]}
-            placeholder="Tri par défaut"
+            placeholder="Plus récents"
           />
         </div>
       </div>

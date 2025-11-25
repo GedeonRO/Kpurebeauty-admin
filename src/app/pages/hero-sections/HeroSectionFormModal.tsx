@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { heroSectionAPI, CreateHeroSectionDTO } from "@/app/api/heroSections";
-import { uploadAPI } from "@/app/api/upload";
 import { Button } from "@/components/ui/Button";
-import { CloseCircle, Gallery } from "iconsax-react";
+import { ImageUpload } from "@/components/forms/ImageUpload";
+import { CloseCircle } from "iconsax-react";
 
 interface Props {
   section?: any;
@@ -33,8 +33,6 @@ export function HeroSectionFormModal({ section, onClose }: Props) {
     startDate: section?.startDate ? section.startDate.split('T')[0] : '',
     endDate: section?.endDate ? section.endDate.split('T')[0] : '',
   });
-
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   const mutation = useMutation({
     mutationFn: (data: CreateHeroSectionDTO) => {
@@ -80,24 +78,6 @@ export function HeroSectionFormModal({ section, onClose }: Props) {
       }
       return { ...prev, displayLocation: [...current, location] };
     });
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'mobileImage') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingImage(true);
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-      const response = await uploadAPI.uploadImage(formData);
-      handleChange(field, response.url);
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Erreur lors de l\'upload de l\'image');
-    } finally {
-      setUploadingImage(false);
-    }
   };
 
   return (
@@ -172,53 +152,22 @@ export function HeroSectionFormModal({ section, onClose }: Props) {
 
             {/* Main Image */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium mb-1">Image principale *</label>
-              <div className="flex items-center gap-4">
-                {formData.image && (
-                  <img src={formData.image} alt="Preview" className="w-32 h-20 object-cover rounded" />
-                )}
-                <label className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600">
-                  <Gallery size={20} />
-                  {uploadingImage ? 'Upload en cours...' : 'Choisir une image'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'image')}
-                    className="hidden"
-                    disabled={uploadingImage}
-                  />
-                </label>
-              </div>
-              {!formData.image && (
-                <input
-                  type="url"
-                  placeholder="Ou entrez une URL d'image"
-                  value={formData.image}
-                  onChange={(e) => handleChange('image', e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg mt-2"
-                />
-              )}
+              <ImageUpload
+                label="Image principale *"
+                value={formData.image}
+                onChange={(url) => handleChange('image', url)}
+                folder="kpure/hero-sections"
+              />
             </div>
 
             {/* Mobile Image */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium mb-1">Image mobile (optionnel)</label>
-              <div className="flex items-center gap-4">
-                {formData.mobileImage && (
-                  <img src={formData.mobileImage} alt="Preview" className="w-32 h-20 object-cover rounded" />
-                )}
-                <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-300">
-                  <Gallery size={20} />
-                  Choisir une image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'mobileImage')}
-                    className="hidden"
-                    disabled={uploadingImage}
-                  />
-                </label>
-              </div>
+              <ImageUpload
+                label="Image mobile (optionnel)"
+                value={formData.mobileImage}
+                onChange={(url) => handleChange('mobileImage', url)}
+                folder="kpure/hero-sections"
+              />
             </div>
 
             {/* Colors */}
@@ -353,7 +302,7 @@ export function HeroSectionFormModal({ section, onClose }: Props) {
           <Button variant="outline" onClick={onClose} type="button">
             Annuler
           </Button>
-          <Button onClick={handleSubmit} disabled={mutation.isPending || uploadingImage}>
+          <Button onClick={handleSubmit} disabled={mutation.isPending}>
             {mutation.isPending ? 'Enregistrement...' : isEditing ? 'Mettre à jour' : 'Créer'}
           </Button>
         </div>

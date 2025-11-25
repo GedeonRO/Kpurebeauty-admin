@@ -285,7 +285,7 @@ export function ProductFormModal({
               <Textarea
                 label="Ingrédients"
                 name="ingredients"
-                value={formData.ingredients.join(",")}
+                value={formData.ingredients && formData.ingredients.join(",")}
                 onChange={handleChange}
                 rows={5}
                 required
