@@ -1,5 +1,6 @@
-import { CloseCircle } from "iconsax-react";
+import { CloseCircle, Eye } from "iconsax-react";
 import { Button } from "@/components/ui/Button";
+import { useState } from "react";
 
 interface ProductViewModalProps {
   product: any;
@@ -7,6 +8,8 @@ interface ProductViewModalProps {
 }
 
 export function ProductViewModal({ product, onClose }: ProductViewModalProps) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   if (!product) return null;
 
   const formatArray = (arr?: string[] | string) => {
@@ -111,12 +114,35 @@ export function ProductViewModal({ product, onClose }: ProductViewModalProps) {
             multiline
           />
           <Field label="Tags" value={formatArray(product.tags)} fullWidth />
-          <Field
-            label="Images supplémentaires"
-            value={formatArray(product.images)}
-            fullWidth
-            multiline
-          />
+          {/* Images supplémentaires */}
+          {product.images && product.images.length > 0 && (
+            <div className="col-span-2">
+              <label className="text-sm font-medium text-gray-600 mb-2 block">
+                Images supplémentaires ({product.images.length})
+              </label>
+              <div className="grid grid-cols-4 gap-3">
+                {product.images.map((imageUrl: string, index: number) => (
+                  <div
+                    key={index}
+                    className="relative group cursor-pointer aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-all"
+                    onClick={() => setSelectedImage(imageUrl)}
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={`Image ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                      <Eye
+                        size={24}
+                        className="text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex justify-end border-t border-gray-200  pt-4 mt-6">
@@ -126,6 +152,29 @@ export function ProductViewModal({ product, onClose }: ProductViewModalProps) {
           </div>
         </div>
       </div>
+
+      {/* Image Zoom Modal */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black/50 rounded-full p-2"
+            >
+              <CloseCircle size={32} />
+            </button>
+            <img
+              src={selectedImage}
+              alt="Image agrandie"
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

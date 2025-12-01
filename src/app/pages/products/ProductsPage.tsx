@@ -27,7 +27,7 @@ export function ProductsPage() {
   const [search, setSearch] = useState("");
   const [searchTerm, setSearchTerm] = useState(""); // 🟢 champ brut avec debounce
   const [categoryId, setCategoryId] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const [showModal, setShowModal] = useState(false);
   const [brand, setBrand] = useState("");
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -36,6 +36,8 @@ export function ProductsPage() {
   const [deletingProductId, setDeletingProductId] = useState<string | null>(
     null
   );
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const queryClient = useQueryClient();
 
   // 🟢 debounce de 1000ms
@@ -89,6 +91,15 @@ export function ProductsPage() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (productIds: string[]) => productsApi.bulkDelete(productIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setShowBulkDeleteModal(false);
+      setSelectedProducts(new Set());
+    },
+  });
+
  
 
   // Vérifier les produits sans catégorie
@@ -129,6 +140,36 @@ export function ProductsPage() {
     }
   };
 
+  const handleToggleProduct = (productId: string) => {
+    const newSelected = new Set(selectedProducts);
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId);
+    } else {
+      newSelected.add(productId);
+    }
+    setSelectedProducts(newSelected);
+  };
+
+  const handleToggleAll = () => {
+    if (selectedProducts.size === data?.products?.length) {
+      setSelectedProducts(new Set());
+    } else {
+      const allIds = new Set(data?.products?.map((p: any) => p._id) || []);
+      setSelectedProducts(allIds);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedProducts.size > 0) {
+      setShowBulkDeleteModal(true);
+    }
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    const productIds = Array.from(selectedProducts);
+    await bulkDeleteMutation.mutateAsync(productIds);
+  };
+
   const handleCloseModal = () => {
     setShowModal(false);
     setShowProduct(false);
@@ -142,8 +183,32 @@ export function ProductsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-base">Gestion des Produits</h1>
+        <div>
+          <h1 className="text-base mb-1">Gestion des Produits</h1>
+          <p className="text-sm text-gray-600">
+            Total :{" "}
+            <span className="font-semibold text-gray-900">
+              {data?.pagination?.total || 0}
+            </span>{" "}
+            produit{(data?.pagination?.total || 0) > 1 ? "s" : ""}
+            {selectedProducts.size > 0 && (
+              <span className="ml-3 text-blue-600">
+                ({selectedProducts.size} sélectionné
+                {selectedProducts.size > 1 ? "s" : ""})
+              </span>
+            )}
+          </p>
+        </div>
         <div className="flex gap-3">
+          {selectedProducts.size > 0 && (
+            <Button
+              onClick={handleBulkDelete}
+              className="bg-red-600 text-white px-4 py-2 flex items-center gap-2 hover:bg-red-700"
+            >
+              <Trash size={20} />
+              Supprimer ({selectedProducts.size})
+            </Button>
+          )}
           <Button
             onClick={() => setShowModal(true)}
             className="bg-[#14A800] text-white px-4 py-2 flex items-center gap-2"
@@ -212,7 +277,7 @@ export function ProductsPage() {
               setPage(1);
             }}
             options={[
-              { value: "", label: "Plus récents" },
+              { value: "newest", label: "Plus récents" },
               { value: "order", label: "Ordre d'affichage" },
               { value: "most-reviewed", label: "Plus commentés" },
               { value: "most-liked", label: "Plus likés" },
@@ -230,6 +295,17 @@ export function ProductsPage() {
       <Table>
         <TableHead>
           <TableRow>
+            <TableHeader className="w-12">
+              <input
+                type="checkbox"
+                checked={
+                  selectedProducts.size === data?.products?.length &&
+                  data?.products?.length > 0
+                }
+                onChange={handleToggleAll}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+            </TableHeader>
             <TableHeader>Image</TableHeader>
             <TableHeader>Nom</TableHeader>
             <TableHeader>SKU</TableHeader>
@@ -242,7 +318,18 @@ export function ProductsPage() {
         </TableHead>
         <TableBody>
           {data?.products?.map((product: any) => (
-            <TableRow key={product._id}>
+            <TableRow
+              key={product._id}
+              className={selectedProducts.has(product._id) ? "bg-blue-50" : ""}
+            >
+              <TableCell>
+                <input
+                  type="checkbox"
+                  checked={selectedProducts.has(product._id)}
+                  onChange={() => handleToggleProduct(product._id)}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+              </TableCell>
               <TableCell>
                 <img
                   src={product.mainImage}
@@ -332,11 +419,24 @@ export function ProductsPage() {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleConfirmDelete}
         title="Confirmer la suppression"
-        message="Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible et supprimera toutes les données associées."
+        message="Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible et supprimera toutes les données associées, y compris les images sur Cloudinary."
         confirmText="Supprimer"
         cancelText="Annuler"
         type="danger"
         isLoading={deleteMutation.isPending}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        onConfirm={handleConfirmBulkDelete}
+        title="Confirmer la suppression multiple"
+        message={`Êtes-vous sûr de vouloir supprimer ${selectedProducts.size} produit(s) ? Cette action est irréversible et supprimera toutes les données associées, y compris les images sur Cloudinary.`}
+        confirmText={`Supprimer ${selectedProducts.size} produit(s)`}
+        cancelText="Annuler"
+        type="danger"
+        isLoading={bulkDeleteMutation.isPending}
       />
     </div>
   );

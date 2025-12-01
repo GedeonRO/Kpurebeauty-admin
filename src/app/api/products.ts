@@ -56,6 +56,19 @@ export const productsApi = {
     await apiClient.delete(`/products/${id}`);
   },
 
+  bulkDelete: async (productIds: string[]): Promise<{
+    success: number;
+    failed: number;
+    errors: Array<{ id: string; error: string }>;
+  }> => {
+    const response = await apiClient.post<ApiResponse<{
+      success: number;
+      failed: number;
+      errors: Array<{ id: string; error: string }>;
+    }>>("/products/bulk-delete", { productIds });
+    return response.data.data!;
+  },
+
   updateStock: async (
     id: string,
     quantity: number,
