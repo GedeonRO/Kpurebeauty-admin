@@ -171,6 +171,7 @@ export function CategoriesPage() {
               <TableHeader>Nom</TableHeader>
               <TableHeader>Slug</TableHeader>
               <TableHeader>Description</TableHeader>
+              <TableHeader>Tags</TableHeader>
               <TableHeader>Ordre</TableHeader>
               <TableHeader>Statut</TableHeader>
               <TableHeader>Actions</TableHeader>
@@ -199,6 +200,25 @@ export function CategoriesPage() {
                     <span className="text-sm">{category.description.substring(0, 50)}{category.description.length > 50 ? '...' : ''}</span>
                   ) : (
                     <span className="text-gray-400">-</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {category.tags && category.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {category.tags.slice(0, 3).map((tag: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-block px-2 py-0.5 bg-green-50 text-green-700 rounded text-xs"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {category.tags.length > 3 && (
+                        <span className="text-xs text-gray-500">+{category.tags.length - 3}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-sm">-</span>
                   )}
                 </TableCell>
                 <TableCell>{category.order}</TableCell>
@@ -239,6 +259,7 @@ export function CategoriesPage() {
               <TableHeader>Slug</TableHeader>
               <TableHeader>Catégorie</TableHeader>
               <TableHeader>Description</TableHeader>
+              <TableHeader>Tags</TableHeader>
               <TableHeader>Ordre</TableHeader>
               <TableHeader>Statut</TableHeader>
               <TableHeader>Actions</TableHeader>
@@ -270,6 +291,25 @@ export function CategoriesPage() {
                     <span className="text-sm">{subCategory.description.substring(0, 40)}{subCategory.description.length > 40 ? '...' : ''}</span>
                   ) : (
                     <span className="text-gray-400">-</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {subCategory.tags && subCategory.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {subCategory.tags.slice(0, 3).map((tag: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-block px-2 py-0.5 bg-green-50 text-green-700 rounded text-xs"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {subCategory.tags.length > 3 && (
+                        <span className="text-xs text-gray-500">+{subCategory.tags.length - 3}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-sm">-</span>
                   )}
                 </TableCell>
                 <TableCell>{subCategory.order}</TableCell>

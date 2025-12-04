@@ -7,7 +7,7 @@ import { Input } from "@/components/forms/Input";
 import { Textarea } from "@/components/forms/Textarea";
 import { Select } from "@/components/forms/Select";
 import { ImageUpload } from "@/components/forms/ImageUpload";
-import { CloseCircle } from "iconsax-react";
+import { CloseCircle, Add, CloseSquare } from "iconsax-react";
 
 interface SubCategoryFormModalProps {
   subCategory?: any;
@@ -21,10 +21,12 @@ export function SubCategoryFormModal({ subCategory, onClose, onSuccess }: SubCat
     slug: subCategory?.slug || '',
     description: subCategory?.description || '',
     image: subCategory?.image || '',
+    tags: subCategory?.tags || [],
     categoryId: subCategory?.categoryId?._id || subCategory?.categoryId || '',
     order: subCategory?.order || 0,
     isActive: subCategory?.isActive ?? true,
   });
+  const [tagInput, setTagInput] = useState('');
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -72,6 +74,26 @@ export function SubCategoryFormModal({ subCategory, onClose, onSuccess }: SubCat
         [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
       }));
     }
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (!formData.tags.includes(tagInput.trim())) {
+        setFormData(prev => ({
+          ...prev,
+          tags: [...prev.tags, tagInput.trim()]
+        }));
+      }
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
   };
 
   return (
@@ -126,6 +148,39 @@ export function SubCategoryFormModal({ subCategory, onClose, onSuccess }: SubCat
             onChange={handleChange}
             rows={3}
           />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tags (pour la recherche)
+            </label>
+            <div className="space-y-2">
+              <Input
+                placeholder="Ajoutez un tag et appuyez sur Entrée"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleAddTag}
+              />
+              {formData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="hover:text-green-900"
+                      >
+                        <CloseSquare size={16} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
           <ImageUpload
             label="Image de la sous-catégorie"
