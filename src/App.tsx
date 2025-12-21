@@ -15,6 +15,7 @@ import { CouponsPage } from './app/pages/coupons';
 import { ProfilePage } from './app/pages/profile/ProfilePage';
 import { ProductSectionsPage } from './app/pages/product-sections';
 import { HeroSectionsPage } from './app/pages/hero-sections';
+import { PricingSettingsPage } from './app/pages/settings';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +54,7 @@ function App() {
             <Route path="coupons" element={<CouponsPage />} />
             <Route path="product-sections" element={<ProductSectionsPage />} />
             <Route path="hero-sections" element={<HeroSectionsPage />} />
+            <Route path="settings/pricing" element={<PricingSettingsPage />} />
             <Route path="profile" element={<ProfilePage />} />
           </Route>
 

@@ -13,6 +13,7 @@ import {
   Layer,
   Gallery,
   Element4,
+  Setting2,
 } from "iconsax-react";
 
 interface NavItem {
@@ -33,6 +34,7 @@ const navItems: NavItem[] = [
   { name: "Reviews", path: "/reviews", icon: Star },
   { name: "Promotions", path: "/promotions", icon: Gift },
   { name: "Coupons", path: "/coupons", icon: TicketDiscount },
+  { name: "Paramètres Prix", path: "/settings/pricing", icon: Setting2 },
 ];
 
 interface SidebarProps {

@@ -1,0 +1,1 @@
+export { PricingSettingsPage } from './PricingSettingsPage';
