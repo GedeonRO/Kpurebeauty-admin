@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { routinesApi } from "@/app/api/routines";
 import { productsApi } from "@/app/api/products";
@@ -7,7 +7,7 @@ import { Input } from "@/components/forms/Input";
 import { Textarea } from "@/components/forms/Textarea";
 import { Select } from "@/components/forms/Select";
 import { ImageUpload } from "@/components/forms/ImageUpload";
-import { CloseCircle, Add, Trash } from "iconsax-react";
+import { CloseCircle, Add, Trash, SearchNormal } from "iconsax-react";
 import type { Routine, RoutineProduct, Product } from "@/types";
 
 interface RoutineFormModalProps {
@@ -38,12 +38,30 @@ export function RoutineFormModal({ routine, onClose, onSuccess }: RoutineFormMod
     routine?.products || []
   );
 
+  const [productSearches, setProductSearches] = useState<Record<number, string>>({});
+
   const { data: productsData } = useQuery({
     queryKey: ['products'],
     queryFn: () => productsApi.getAll({ limit: 1000 }),
   });
 
   const products = productsData?.products || [];
+
+  // Calculate compareAtPrice automatically based on selected products
+  useEffect(() => {
+    const totalPrice = routineProducts.reduce((sum, rp) => {
+      const productId = typeof rp.productId === 'object' ? (rp.productId as Product)._id : rp.productId;
+      const product = products.find((p: Product) => p._id === productId);
+      return sum + (product?.price || 0);
+    }, 0);
+
+    if (totalPrice > 0) {
+      setFormData(prev => ({
+        ...prev,
+        compareAtPrice: totalPrice.toString()
+      }));
+    }
+  }, [routineProducts, products]);
 
   const mutation = useMutation({
     mutationFn: (data: any) =>
@@ -122,6 +140,22 @@ export function RoutineFormModal({ routine, onClose, onSuccess }: RoutineFormMod
     setRoutineProducts(updated);
   };
 
+  const updateProductSearch = (index: number, search: string) => {
+    setProductSearches(prev => ({ ...prev, [index]: search }));
+  };
+
+  // Get filtered products for a specific product row
+  const getFilteredProducts = (index: number) => {
+    const search = productSearches[index]?.toLowerCase() || '';
+    if (!search) return products;
+
+    return products.filter((p: Product) =>
+      p.name.toLowerCase().includes(search) ||
+      p.sku?.toLowerCase().includes(search) ||
+      p.brand?.toLowerCase().includes(search)
+    );
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style={{ padding: '16px' }}>
       <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 shadow-lg">
@@ -188,22 +222,39 @@ export function RoutineFormModal({ routine, onClose, onSuccess }: RoutineFormMod
               placeholder="Ex: 4 semaines"
             />
 
-            <Input
-              label="Prix (XOF)"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleChange}
-              required
-            />
+            <div>
+              <Input
+                label="Prix de la routine (XOF)"
+                name="price"
+                type="number"
+                value={formData.price}
+                onChange={handleChange}
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Le prix de vente de la routine (plus bas que le prix comparé pour montrer l'économie)
+              </p>
+            </div>
 
-            <Input
-              label="Prix comparé (XOF)"
-              name="compareAtPrice"
-              type="number"
-              value={formData.compareAtPrice}
-              onChange={handleChange}
-            />
+            <div>
+              <Input
+                label="Prix comparé (XOF) - Auto-calculé"
+                name="compareAtPrice"
+                type="number"
+                value={formData.compareAtPrice}
+                onChange={handleChange}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.compareAtPrice
+                  ? `Total si acheté séparément: ${(Number(formData.compareAtPrice) / 100).toFixed(0)} XOF`
+                  : 'Sera calculé automatiquement selon les produits sélectionnés'}
+              </p>
+              {formData.price && formData.compareAtPrice && Number(formData.compareAtPrice) > Number(formData.price) && (
+                <p className="text-xs text-green-600 mt-1 font-medium">
+                  💰 Économie: {((1 - Number(formData.price) / Number(formData.compareAtPrice)) * 100).toFixed(0)}%
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Images */}
@@ -230,9 +281,21 @@ export function RoutineFormModal({ routine, onClose, onSuccess }: RoutineFormMod
           {/* Products Section */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Produits de la routine *
-              </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Produits de la routine *
+                </label>
+                {routineProducts.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {routineProducts.length} produit{routineProducts.length > 1 ? 's' : ''} sélectionné{routineProducts.length > 1 ? 's' : ''}
+                    {formData.compareAtPrice && (
+                      <span className="ml-2 font-medium text-blue-600">
+                        • Total: {(Number(formData.compareAtPrice) / 100).toFixed(0)} XOF
+                      </span>
+                    )}
+                  </p>
+                )}
+              </div>
               <Button
                 type="button"
                 onClick={addProduct}
@@ -245,56 +308,87 @@ export function RoutineFormModal({ routine, onClose, onSuccess }: RoutineFormMod
             </div>
 
             <div className="space-y-3">
-              {routineProducts.map((rp, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <div className="grid grid-cols-12 gap-3 items-start">
-                    <div className="col-span-5">
-                      <Select
-                        label="Produit"
-                        name={`product-${index}`}
-                        value={typeof rp.productId === 'object' ? (rp.productId as Product)._id : rp.productId}
-                        onChange={(e) => updateProduct(index, 'productId', e.target.value)}
-                        options={products?.map((p: Product) => ({
-                          value: p._id,
-                          label: p.name,
-                        })) || []}
-                        required
-                      />
-                    </div>
+              {routineProducts.map((rp, index) => {
+                const filteredProducts = getFilteredProducts(index);
+                const selectedProduct = products.find((p: Product) =>
+                  p._id === (typeof rp.productId === 'object' ? (rp.productId as Product)._id : rp.productId)
+                );
 
-                    <div className="col-span-2">
-                      <Input
-                        label="Ordre"
-                        name={`order-${index}`}
-                        type="number"
-                        value={rp.order}
-                        onChange={(e) => updateProduct(index, 'order', Number(e.target.value))}
-                        required
-                      />
-                    </div>
+                return (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-12 gap-3 items-start">
+                      <div className="col-span-5">
+                        {/* Search Input */}
+                        <div className="mb-2">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="Rechercher un produit..."
+                              value={productSearches[index] || ''}
+                              onChange={(e) => updateProductSearch(index, e.target.value)}
+                              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            />
+                            <SearchNormal size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                          </div>
+                        </div>
 
-                    <div className="col-span-4">
-                      <Input
-                        label="Note (optionnel)"
-                        name={`note-${index}`}
-                        value={rp.note || ''}
-                        onChange={(e) => updateProduct(index, 'note', e.target.value)}
-                        placeholder="Ex: Appliquer le matin"
-                      />
-                    </div>
+                        {/* Product Select */}
+                        <Select
+                          label="Produit"
+                          name={`product-${index}`}
+                          value={typeof rp.productId === 'object' ? (rp.productId as Product)._id : rp.productId}
+                          onChange={(e) => updateProduct(index, 'productId', e.target.value)}
+                          options={filteredProducts?.map((p: Product) => ({
+                            value: p._id,
+                            label: `${p.name} ${p.price ? `(${(p.price / 100).toFixed(0)} XOF)` : ''}`,
+                          })) || []}
+                          required
+                        />
 
-                    <div className="col-span-1 flex items-end">
-                      <button
-                        type="button"
-                        onClick={() => removeProduct(index)}
-                        className="text-red-600 hover:text-red-800 p-2"
-                      >
-                        <Trash size={20} />
-                      </button>
+                        {/* Selected Product Info */}
+                        {selectedProduct && (
+                          <div className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                            <p><strong>Prix:</strong> {(selectedProduct.price / 100).toFixed(0)} XOF</p>
+                            {selectedProduct.brand && <p><strong>Marque:</strong> {selectedProduct.brand}</p>}
+                            {selectedProduct.sku && <p><strong>SKU:</strong> {selectedProduct.sku}</p>}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="col-span-2">
+                        <Input
+                          label="Ordre"
+                          name={`order-${index}`}
+                          type="number"
+                          value={rp.order}
+                          onChange={(e) => updateProduct(index, 'order', Number(e.target.value))}
+                          required
+                        />
+                      </div>
+
+                      <div className="col-span-4">
+                        <Input
+                          label="Note (optionnel)"
+                          name={`note-${index}`}
+                          value={rp.note || ''}
+                          onChange={(e) => updateProduct(index, 'note', e.target.value)}
+                          placeholder="Ex: Appliquer le matin"
+                        />
+                      </div>
+
+                      <div className="col-span-1 flex items-end">
+                        <button
+                          type="button"
+                          onClick={() => removeProduct(index)}
+                          className="text-red-600 hover:text-red-800 p-2"
+                        >
+                          <Trash size={20} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {routineProducts.length === 0 && (
                 <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
