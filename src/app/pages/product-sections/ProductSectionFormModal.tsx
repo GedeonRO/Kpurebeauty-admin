@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { productSectionAPI, CreateProductSectionDTO } from "@/app/api/productSections";
 import { productsApi } from "@/app/api/products";

@@ -48,6 +48,11 @@ export const promotionsApi = {
     await apiClient.delete(`/promotions/admin/promotions/${id}`);
   },
 
+  toggleStatus: async (id: string): Promise<Promotion> => {
+    const response = await apiClient.patch<ApiResponse<Promotion>>(`/promotions/admin/promotions/${id}/toggle-status`);
+    return response.data.data!;
+  },
+
   // Coupons
   getAllCoupons: async (params?: {
     active?: boolean;

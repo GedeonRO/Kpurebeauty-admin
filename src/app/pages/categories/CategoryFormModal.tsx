@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
 import { Textarea } from "@/components/forms/Textarea";
 import { ImageUpload } from "@/components/forms/ImageUpload";
-import { CloseCircle, Add, CloseSquare } from "iconsax-react";
+import { CloseCircle, CloseSquare } from "iconsax-react";
 
 interface CategoryFormModalProps {
   category?: any;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {  Key, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { subCategoriesApi } from "@/app/api/subcategories";
 import { categoriesApi } from "@/app/api/categories";
@@ -7,7 +7,7 @@ import { Input } from "@/components/forms/Input";
 import { Textarea } from "@/components/forms/Textarea";
 import { Select } from "@/components/forms/Select";
 import { ImageUpload } from "@/components/forms/ImageUpload";
-import { CloseCircle, Add, CloseSquare } from "iconsax-react";
+import { CloseCircle,  CloseSquare } from "iconsax-react";
 
 interface SubCategoryFormModalProps {
   subCategory?: any;
@@ -92,7 +92,7 @@ export function SubCategoryFormModal({ subCategory, onClose, onSuccess }: SubCat
   const handleRemoveTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((tag: string) => tag !== tagToRemove)
     }));
   };
 
@@ -162,7 +162,7 @@ export function SubCategoryFormModal({ subCategory, onClose, onSuccess }: SubCat
               />
               {formData.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {formData.tags.map((tag, index) => (
+                  {formData.tags.map((tag: string , index: Key | null | undefined) => (
                     <span
                       key={index}
                       className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm"

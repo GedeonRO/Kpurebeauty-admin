@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "@/app/api/users";
-import { Button } from "@/components/ui/Button";
+
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Card, CardContent } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/Stat Card";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { formatDateTime } from "@/lib/utils/formatters";
-import { SearchNormal, Edit, Trash, User, UserTick, UserRemove } from "iconsax-react";
+import { SearchNormal,  Trash, User, UserTick, UserRemove } from "iconsax-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Pagination } from "@/components/ui/Pagination";
 import { Select } from "@/components/forms/Select";

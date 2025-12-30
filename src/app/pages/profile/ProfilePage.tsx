@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { authApi } from "@/app/api/auth";
 import { useAuth } from "@/app/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
-import { User, Lock, Camera } from "iconsax-react";
+import { User } from "iconsax-react";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
 export function ProfilePage() {
   const { user, isLoading } = useAuth();
-  const queryClient = useQueryClient();
+  
 
   // Profile form state
   const [profileData, setProfileData] = useState({

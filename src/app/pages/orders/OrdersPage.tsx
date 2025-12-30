@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ordersApi } from "@/app/api/orders";
-import { Button } from "@/components/ui/Button";
+import type { Order } from "@/types";
+
 import { Badge } from "@/components/ui/Badge";
 import { TableSkeleton } from "@/components/skeletons/TableSkeleton";
 import { formatCurrency, formatDateTime } from "@/lib/utils/formatters";
@@ -30,11 +31,17 @@ export function OrdersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['orders', 'admin', page, status, search],
-    queryFn: () => ordersApi.getAllAdmin({ page, limit: 20, status, search }),
+    queryFn: async () => {
+      const result = await ordersApi.getAll({ page, limit: 20, status });
+      return {
+        data: result.orders,
+        pagination: result.pagination
+      };
+    },
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ orderId, newStatus }: { orderId: string; newStatus: string }) =>
+    mutationFn: ({ orderId, newStatus }: { orderId: string; newStatus: Order['status'] }) =>
       ordersApi.updateStatus(orderId, newStatus),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });

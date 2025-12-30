@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/Badge";
 import { formatCurrency, formatDateTime } from "@/lib/utils/formatters";
 import { CloseCircle } from "iconsax-react";
 import { Select } from "@/components/forms/Select";
+import type { Order } from "@/types";
 
 interface OrderDetailsModalProps {
   order: any;
   onClose: () => void;
-  onUpdateStatus: (orderId: string, status: string) => void;
+  onUpdateStatus: (orderId: string, status: Order['status']) => void;
 }
 
 const statusOptions = [
